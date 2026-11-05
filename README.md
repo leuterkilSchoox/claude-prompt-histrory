@@ -35,7 +35,15 @@ Download the file for your OS from [Releases](https://github.com/leuterkilSchoox
 
 ## Release a new version
 
-Bump `version` in `src-tauri/tauri.conf.json`, then `git tag vX.Y.Z && git push --tags`. GitHub Actions builds all installers and publishes the release.
+Bump `version` in `src-tauri/tauri.conf.json` (and `src-tauri/Cargo.toml`), commit, then:
+
+```bash
+git tag vX.Y.Z && git push origin vX.Y.Z
+gh release create vX.Y.Z --verify-tag --title "Prompt History vX.Y.Z" --notes "Download the installer for your OS below."
+```
+
+GitHub Actions builds the installers and uploads them to that release, then the apt repo updates itself.
+(The release is created by hand because the workflow token is refused when creating releases in this repo.)
 
 ## Develop
 
