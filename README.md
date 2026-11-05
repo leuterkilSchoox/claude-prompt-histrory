@@ -10,6 +10,20 @@ Desktop viewer (Tauri v2) for Claude Code conversations stored in `~/.claude/pro
 
 ## Install
 
+### Debian / Ubuntu (apt, auto-updates)
+
+```bash
+curl -fsSL https://leuterkilschoox.github.io/claude-prompt-histrory/key.gpg \
+  | sudo gpg --dearmor -o /usr/share/keyrings/prompt-history.gpg
+echo "deb [signed-by=/usr/share/keyrings/prompt-history.gpg] https://leuterkilschoox.github.io/claude-prompt-histrory ./" \
+  | sudo tee /etc/apt/sources.list.d/prompt-history.list
+sudo apt update && sudo apt install prompt-history
+```
+
+New versions then arrive with `sudo apt upgrade`.
+
+### Manual download
+
 Download the file for your OS from [Releases](https://github.com/leuterkilSchoox/claude-prompt-histrory/releases/latest):
 
 | OS | File | Notes |

@@ -1,0 +1,54 @@
+name: apt-repo
+
+# Republishes the signed apt repo on GitHub Pages after every release build.
+# Releases created with GITHUB_TOKEN don't fire `release` events, hence workflow_run.
+on:
+  workflow_run:
+    workflows: [release]
+    types: [completed]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+concurrency:
+  group: pages
+  cancel-in-progress: false
+
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deploy.outputs.page_url }}
+    steps:
+      - name: Download latest .deb
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          mkdir repo
+          gh release download -R ${{ github.repository }} -p '*.deb' -D repo
+          ls -la repo
+
+      - name: Build and sign repo index
+        env:
+          GPG_KEY: ${{ secrets.APT_GPG_PRIVATE_KEY }}
+        working-directory: repo
+        run: |
+          echo "$GPG_KEY" | gpg --batch --import
+          apt-ftparchive packages . > Packages
+          gzip -k9 Packages
+          apt-ftparchive -o APT::FTPArchive::Release::Origin="Prompt History" \
+                         -o APT::FTPArchive::Release::Label="Prompt History" release . > Release
+          gpg --batch --yes --armor --detach-sign -o Release.gpg Release
+          gpg --batch --yes --clearsign -o InRelease Release
+          gpg --armor --export > key.gpg
+
+      - uses: actions/upload-pages-artifact@v3
+        with:
+          path: repo
+
+      - id: deploy
+        uses: actions/deploy-pages@v4
