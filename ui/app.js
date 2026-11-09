@@ -105,13 +105,36 @@ function toolBlock(b) {
   return d;
 }
 
+// AskUserQuestion: always-visible card with each question and the user's answer.
+// Result text looks like: User has answered your questions: "Q"="A", "Q2"="A2". …
+function askBlock(b) {
+  let qs;
+  try { qs = JSON.parse(b.text).questions; } catch { return null; } // truncated input → plain tool block
+  if (!Array.isArray(qs)) return null;
+  // Prefer the structured answers; the result text doesn't escape quotes, so regex is only a fallback.
+  const answers = new Map(Object.entries(b.answers || {}));
+  if (!answers.size)
+    for (const m of (b.result || '').matchAll(/"((?:[^"\\]|\\.)*)"="((?:[^"\\]|\\.)*)"/g)) answers.set(m[1], m[2]);
+  const card = el('div', 'ask' + (b.is_error ? ' error' : ''));
+  card.append(el('div', 'ask-title', '❓ Asked you'));
+  for (const q of qs) {
+    const item = el('div', 'ask-q');
+    if (q.header) item.append(el('span', 'chip', q.header));
+    item.append(el('div', 'ask-text', q.question));
+    const a = answers.get(q.question);
+    item.append(el('div', 'ask-a' + (a ? '' : ' none'), a ? '→ ' + a : b.is_error ? 'Declined' : 'No answer'));
+    card.append(item);
+  }
+  return card;
+}
+
 function renderChat(turns) {
   const chat = $('#chat');
   chat.replaceChildren();
   for (const t of turns) {
     const row = el('div', 'row ' + t.role);
     const bubble = el('div', 'bubble');
-    let hasText = false;
+    let hasText = false, ask;
     for (const b of t.blocks) {
       if (b.kind === 'text') {
         const m = el('div', 'md');
@@ -120,6 +143,9 @@ function renderChat(turns) {
         hasText = true;
       } else if (b.kind === 'thinking') {
         bubble.append(el('div', 'md thinking', b.text));
+      } else if (b.name === 'AskUserQuestion' && (ask = askBlock(b))) {
+        bubble.append(ask);
+        hasText = true; // keep row visible when tools are hidden
       } else {
         bubble.append(toolBlock(b));
       }

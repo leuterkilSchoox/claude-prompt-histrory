@@ -28,6 +28,7 @@ struct Block {
     tool_id: String,
     result: Option<String>,
     is_error: bool,
+    answers: Option<Value>, // AskUserQuestion: {question: answer}
 }
 
 #[derive(Serialize)]
@@ -166,6 +167,7 @@ fn parse_turns(path: &Path) -> Vec<Turn> {
                     if let Some(tool) = last.blocks.iter_mut().find(|x| x.tool_id == id) {
                         tool.result = Some(truncate(&result_text(&b["content"])));
                         tool.is_error = b["is_error"].as_bool().unwrap_or(false);
+                        tool.answers = v["toolUseResult"].get("answers").cloned();
                     }
                 }
             }
@@ -189,13 +191,19 @@ fn parse_turns(path: &Path) -> Vec<Turn> {
                             }
                             Block { kind: "thinking".into(), text: t.to_string(), ..Default::default() }
                         }
-                        Some("tool_use") | Some("server_tool_use") => Block {
-                            kind: "tool".into(),
-                            name: b["name"].as_str().unwrap_or("tool").to_string(),
-                            tool_id: b["id"].as_str().unwrap_or("").to_string(),
-                            text: truncate(&serde_json::to_string_pretty(&b["input"]).unwrap_or_default()),
-                            ..Default::default()
-                        },
+                        Some("tool_use") | Some("server_tool_use") => {
+                            let name = b["name"].as_str().unwrap_or("tool").to_string();
+                            let input = serde_json::to_string_pretty(&b["input"]).unwrap_or_default();
+                            // The UI parses AskUserQuestion input as JSON, so never cut it.
+                            let text = if name == "AskUserQuestion" { input } else { truncate(&input) };
+                            Block {
+                                kind: "tool".into(),
+                                tool_id: b["id"].as_str().unwrap_or("").to_string(),
+                                name,
+                                text,
+                                ..Default::default()
+                            }
+                        }
                         Some(other) => Block {
                             kind: "tool".into(),
                             name: other.to_string(),

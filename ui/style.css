@@ -86,6 +86,14 @@ main { flex: 1; display: flex; flex-direction: column; min-width: 0; position: r
 .tool > summary { padding: 4px 10px; cursor: pointer; color: var(--muted); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .tool.error > summary { color: #e5484d; }
 .tool pre { margin: 0; padding: 8px 10px; border-top: 1px solid var(--line); white-space: pre-wrap; max-height: 360px; overflow: auto; font-family: ui-monospace, monospace; }
+.ask { margin: 6px 0; border: 1px solid var(--me); border-left-width: 4px; border-radius: 10px; padding: 8px 12px; background: var(--hover); }
+.ask.error { border-color: #e5484d; }
+.ask-title { font-weight: 600; color: var(--me); font-size: 12.5px; margin-bottom: 4px; }
+.ask-q { padding: 6px 0; }
+.ask-q + .ask-q { border-top: 1px solid var(--line); }
+.ask-text { font-weight: 500; }
+.ask-a { color: var(--me); font-weight: 600; }
+.ask-a.none { color: var(--muted); font-weight: 400; font-style: italic; }
 .thinking { font-style: italic; color: var(--muted); }
 body.hide-tools .tool, body.hide-tools .thinking { display: none; }
 body.hide-tools .row.assistant.tools-only { display: none; }
